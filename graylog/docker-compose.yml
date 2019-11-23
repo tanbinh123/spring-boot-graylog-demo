@@ -1,0 +1,31 @@
+version: '2'
+services:
+  mongodb:
+    image: mongo:3.2
+    container_name: mongodb
+  graylog:
+    image: graylog/graylog:3.1
+    container_name: graylog
+    environment:
+      # CHANGE ME (must be at least 16 characters)!
+      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
+      # Password: admin
+      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+      - GRAYLOG_ROOT_TIMEZONE=Asia/Shanghai
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://192.168.1.75:9200
+    links:
+      - mongodb:mongo
+    depends_on:
+      - mongodb
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 1514:1514
+      # Syslog UDP
+      - 1514:1514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
