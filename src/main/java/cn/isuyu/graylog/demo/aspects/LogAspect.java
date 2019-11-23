@@ -3,12 +3,15 @@ package cn.isuyu.graylog.demo.aspects;
 import cn.isuyu.graylog.demo.annotations.ApiName;
 import cn.isuyu.graylog.demo.dto.WebLog;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -16,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import sun.net.util.URLUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
@@ -38,6 +40,8 @@ import java.util.Map;
 @Slf4j
 public class LogAspect {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogAspect.class);
+
 
     @Around("@annotation(apiName)")
     public Object doAround(ProceedingJoinPoint joinPoint, ApiName apiName) throws Throwable {
@@ -57,6 +61,7 @@ public class LogAspect {
 
         String urlStr = request.getRequestURL().toString();
         webLog.setBasePath(urlStr);
+        webLog.setDescription(apiName.name());
         webLog.setIp(request.getRemoteUser());
         webLog.setMethod(request.getMethod());
         webLog.setParameter(getParameter(method, joinPoint.getArgs()));
@@ -65,13 +70,7 @@ public class LogAspect {
         webLog.setStartTime(startTime);
         webLog.setUri(request.getRequestURI());
         webLog.setUrl(request.getRequestURL().toString());
-        Map<String,Object> logMap = new HashMap<>(10);
-        logMap.put("url",webLog.getUrl());
-        logMap.put("method",webLog.getMethod());
-        logMap.put("parameter",webLog.getParameter());
-        logMap.put("spendTime",webLog.getSpendTime());
-        logMap.put("description",webLog.getDescription());
-        log.info(JSON.toJSONString(webLog));
+        log.info(JSON.toJSONString(webLog, SerializerFeature.DisableCircularReferenceDetect));
 
         return result;
     }
